@@ -1,0 +1,32 @@
+# 3ds Max Wavefront OBJ Exporter v0.99 - (c)2007 guruware
+# File Created: 17.04.2025 03:50:27
+
+newmtl banca_uploads_files_4087135_Bench_01_Text_blinn4SG
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.9000 0.9000 0.9000
+	Tr 0.0000
+	d 1.0000
+	Tf 1.0000 1.0000 1.0000
+	Pr 0.9000
+	Pm 0.0000
+	Pc 0.0000
+	Pcr 0.0000
+	Ni 1.5000
+	Ke 0.0000 0.0000 0.0000
+	illum 2
+	map_Kd Bench_01_MTL_01_BaseColor.png
+
+newmtl banca_uploads_files_1987534_Bank_02_wire_135059008
+	Kd 0.5880 0.5880 0.5880
+	Ks 0.9000 0.9000 0.9000
+	Tr 0.0000
+	d 1.0000
+	Tf 1.0000 1.0000 1.0000
+	Pr 0.9000
+	Pm 0.0000
+	Pc 0.0000
+	Pcr 0.0000
+	Ni 1.5000
+	Ke 0.0000 0.0000 0.0000
+	illum 2
+	map_Kd Bench_01_MTL_01_Metallic.png

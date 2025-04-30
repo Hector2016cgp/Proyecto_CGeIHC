@@ -1,0 +1,14 @@
+# Blender 3.6.19 MTL File: 'StreetTrash.blend'
+# www.blender.org
+
+newmtl StreetTrashMaterial001
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd street-trash_Material.001_BaseColor.<UDIM>.png
+map_Ns street-trash_Material.001_Roughness.<UDIM>.png
+map_refl street-trash_Material.001_Metallic.<UDIM>.png
+map_Bump -bm 1.000000 street-trash_Material.001_Normal.<UDIM>.png
