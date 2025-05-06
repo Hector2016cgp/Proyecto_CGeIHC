@@ -81,6 +81,29 @@ const float ballonyAmplitudeX = 5.0f; // Oscilación X
 float ferbHandTime = 0.0f;  // Tiempo acumulado
 float phineasHandTime = 0.0f;
 
+glm::vec3 posicionesPerry[8] = {
+	{-44.875f, 1.5f, 22.25f},
+	{-44.875f, 1.5f, 21.85f},
+	{-44.875f, 1.5f, 21.45f},
+	{-44.875f, 1.5f, 21.05f},
+	{-44.595f, 1.5f, 22.25f},
+	{-44.595f, 1.5f, 21.85f},
+	{-44.595f, 1.5f, 21.45f},
+	{-44.595f, 1.5f, 21.05f}
+};
+
+int perryActual = rand() % 8;
+float perryY = 0.0f;
+bool subiendo = true;
+float tiempoPerry = 0.0f;
+float esperaActual = 0.0f;
+bool esperando = false;
+
+const float velocidadPerry = 0.025f;      // Mucho más lento
+const float alturaMax = 0.4f;
+const float tiempoEspera = 4.0f;       // Espera antes de cambiar de posición
+const float tiempoArriba = 2.5f;        // Tiempo que se queda arriba
+
 
 
 Window mainWindow;
@@ -138,6 +161,9 @@ Model puesto_tacos_M;
 Model puesto_miches_M;
 Model Ferb_mano_M;
 Model Phineas_mano_M;
+Model Mazo_M;
+Model carpa_globo_M;
+Model globo_M;
 
 Skybox skybox;
 //materiales
@@ -423,6 +449,12 @@ int main()
 	Ferb_mano_M.LoadModel("Models/ferb_mano_der.obj");
 	Phineas_mano_M = Model();
 	Phineas_mano_M.LoadModel("Models/phineas_mano_izq.obj");
+	Mazo_M = Model();
+	Mazo_M.LoadModel("Models/mallet.obj");
+	carpa_globo_M = Model();
+	carpa_globo_M.LoadModel("Models/carpa_globos.obj");
+	globo_M = Model();
+	globo_M.LoadModel("Models/globo.obj");
 
 
 	std::vector<std::string> skyboxFaces;
@@ -495,6 +527,40 @@ int main()
 		ballonyTime += deltaTime;
 		ferbHandTime += deltaTime;
 		phineasHandTime += deltaTime;
+
+		//Whack a Perry
+		if (esperando) {
+			esperaActual += deltaTime;
+			if (esperaActual >= tiempoEspera) {
+				esperando = false;
+				esperaActual = 0.0f;
+				perryActual = rand() % 8;  // Cambia de hoyo
+			}
+		}
+		else {
+			if (subiendo) {
+				perryY += velocidadPerry * deltaTime;
+				if (perryY >= alturaMax) {
+					perryY = alturaMax;
+					subiendo = false;
+					esperaActual = 0.0f;
+				}
+			}
+			else {
+				esperaActual += deltaTime;
+				if (esperaActual >= tiempoArriba) {
+					perryY -= velocidadPerry * deltaTime;
+					if (perryY <= 0.0f) {
+						perryY = 0.0f;
+						subiendo = true;
+						esperando = true;
+						esperaActual = 0.0f;
+					}
+				}
+			}
+		}
+
+
 
 
 		// Movimiento
@@ -675,6 +741,7 @@ int main()
 		model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(-45.0f, 1.3f, 30.0f));
 		model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.75f));  
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Ferb_M.RenderModel();
 
@@ -683,21 +750,18 @@ int main()
 		modelaux = model; // guarda el modelo base
 		model = glm::translate(model, glm::vec3(-0.169f, 0.942f, 0.019f)); // punto de unión al hombro
 		model = glm::rotate(model, glm::radians(angleSaludo), glm::vec3(0.0f, 0.0f, 1.0f)); // rotación de saludo
+		model = glm::scale(model, glm::vec3(0.75f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Ferb_mano_M.RenderModel();
 
 	
-		//Perry
-		model = glm::mat4(1.0);
-		model = glm::translate(model, glm::vec3(-45.0f, 1.3f, 26.0f));
-		model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		Perry_M.RenderModel();
+		
 
 		// Phineas
 		model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(-47.0f, 1.2f, 5.0f));
 		model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.75f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Phineas_M.RenderModel();
 		// Phineas mano izquierda
@@ -705,6 +769,7 @@ int main()
 		modelaux = model; // Guarda la transformación base
 		model = glm::translate(model, glm::vec3(0.126f, 0.912f, 0.035f)); // Punto de unión del brazo
 		model = glm::rotate(model, glm::radians(anglePhineasSaludo), glm::vec3(0.0f, 0.0f, 1.0f)); // Rotación tipo saludo
+		model = glm::scale(model, glm::vec3(0.75f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Phineas_mano_M.RenderModel();
 
@@ -714,12 +779,14 @@ int main()
 		model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(-35.0f, 1.2f, 20.0f));
 		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.75f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Candace_M.RenderModel();
 
 		//Isabella
 		model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(-30.0f, 1.2f, 40.0f));
+		model = glm::scale(model, glm::vec3(0.75f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Isabella_M.RenderModel();
 
@@ -727,6 +794,7 @@ int main()
 		model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(-26.0f, 1.2f, 64.0f));
 		model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.75f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Bufard_M.RenderModel();
 
@@ -734,6 +802,7 @@ int main()
 		model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(-20.0f, 1.2f, 40.0f));
 		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.75f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Baljeet_M.RenderModel();
 
@@ -741,17 +810,29 @@ int main()
 		model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(-50.0f, 1.2f, 64.0f));
 		model = glm::rotate(model, glm::radians(130.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.75f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Doof_M.RenderModel();
 
-
+		
 		//Maquina de perry
 		model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(-45.0f, 1.2f, 22.0f));
-		model = glm::scale(model, glm::vec3(0.75f));
+		model = glm::scale(model, glm::vec3(1.0f, 0.5f, 1.75f));
 		model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		topo_machine_M.RenderModel();
+
+		//Perry
+		model = glm::mat4(1.0);
+		glm::vec3 basePos = posicionesPerry[perryActual];
+		model = glm::translate(model, glm::vec3(basePos.x, basePos.y + perryY, basePos.z));
+		model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.4f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Perry_M.RenderModel();
+
+
 
 		//Carpa Perry
 		model = glm::mat4(1.0);
@@ -776,6 +857,30 @@ int main()
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		letrero_perry_juego_M.RenderModel();
 		
+		//---------------JUEGO DE LOS GLOBOS----------------
+		// Carpa Perry
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-15.0f, 1.2f, 50.0f));
+		model = glm::scale(model, glm::vec3(0.75f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		carpa_globo_M.RenderModel();
+
+		// Base inicial después de la carpa
+		model = glm::translate(model, glm::vec3(0.0f, 0.5f, 3.2f));
+		glm::mat4 modelBase = model;
+
+		// Offsets para columnas (-1, 0, 1 en X), cada una con 3 globos apilados en Y
+		float xOffsets[] = { -1.0f, 0.0f, 1.0f };
+
+		for (int col = 0; col < 3; ++col) {
+			glm::mat4 colBase = glm::translate(modelBase, glm::vec3(xOffsets[col], 0.0f, 0.0f));
+			for (int row = 0; row < 3; ++row) {
+				glm::mat4 globoModel = glm::translate(colBase, glm::vec3(0.0f, row * 1.0f, 0.0f));
+				glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(globoModel));
+				globo_M.RenderModel();
+			}
+		}
+
 
 		//Planty
 		model = glm::mat4(1.0);
