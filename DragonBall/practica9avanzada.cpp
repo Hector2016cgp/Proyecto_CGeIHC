@@ -1,14 +1,6 @@
-﻿
-/*
-Animación:
-Sesión 1:
-Simple o básica:Por banderas y condicionales (más de 1 transformación geométrica se ve modificada
-Sesión 2
-Compleja: Por medio de funciones y algoritmos.
-Textura Animada
-Mas de dos transformaciones para considerarse animación
+﻿/*
+Código pare de Dragon Ball
 */
-//para cargar imagen
 #define STB_IMAGE_IMPLEMENTATION
 
 #include <stdio.h>
@@ -43,13 +35,8 @@ Mas de dos transformaciones para considerarse animación
 #include "Material.h"
 const float toRadians = 3.14159265f / 180.0f;
 
-//variables para animación
-float movCoche;
-float movOffset;
-float rotllanta;
-float rotllantaOffset;
-bool avanza;
-//variables movimiento del tren
+
+//empiezan variables movimiento del tren
 const float startX = 0.0f;   //donde arranca en X
 const float startZ = 0.0f;   //donde arranca en Z
 
@@ -68,6 +55,8 @@ const float limNegX = startX - lenNegX;
 float movXTrain = startX;
 float movZTrain = startZ;
 float trainRotation = 0.0f;
+//terminan variables de tren
+
 //variables movimiento de shenron y planeta
 float shenronYOffset = 0.0f;
 float shenronFloatSpeed = 1.0f;
@@ -98,6 +87,36 @@ const float androideLimPosX = startAndroideX + androideLenPosX;
 const float androideLimPosZ = startAndroideZ + androideLenPosZ;
 const float androideLimNegX = startAndroideX - androideLenNegX;
 
+//Variables del movimiento del topo
+
+int topoActual = rand() % 8;
+float topoY = 0.0f;
+bool subiendo = true;
+float tiempoTopo = 0.0f;
+float esperaActual = 0.0f;
+bool esperando = false;
+
+const float velocidadTopo = 0.01f;      // Mucho más lento
+const float alturaMax = 0.4f;
+const float tiempoEspera = 4.0f;       // Espera antes de cambiar de posición
+const float tiempoArriba = 2.5f;        // Tiempo que se queda arriba
+
+
+glm::vec3 posicionesTopo[6] = {
+{-30.0f, -0.5f, -41.75f},
+{-30.0f, -0.5f, -41.45f},
+{-30.0f, -0.5f, -41.05f},
+{-30.5f,-0.5f, -41.75f},
+{-30.5f, -0.5f, -41.45f},
+{-30.5f, -0.5f, -41.05f}
+};
+
+//variables para el movimiento del martillo
+float martilloRotation = -30.0f; // Ángulo inicial (como listo para golpear)
+float martilloAnimTime = 0.0f;
+const float martilloAnimSpeed = 0.1f; // Velocidad de la animación
+const float martilloGolpeAngle = 60.0f; // Máximo ángulo de golpeo
+const float martilloHeight = 4.5f; // Altura sobre el topo
 
 Window mainWindow;
 std::vector<Mesh*> meshList;
@@ -112,7 +131,7 @@ Texture pisoTexture;
 
 
 
-
+//MODELOS DRAGON BALL
 Model Kitt_M;
 Model Llanta_M;
 Model shenron;
@@ -130,6 +149,13 @@ Model namek;
 Model casa;
 Model broly;
 Model radar;
+Model casa_goku;
+Model tasa;
+Model cuerpo_juego;
+Model topo;
+Model martillo;
+//TERMINAN MODELOS
+
 
 Skybox skybox;
 //materiales
@@ -371,7 +397,18 @@ int main()
 	broly.LoadModel("Models/broly.obj");
 	radar = Model();
 	radar.LoadModel("Models/Radar.obj");
+	casa_goku = Model();
+	casa_goku.LoadModel("Models/casa_goku.obj");
+	tasa = Model();
+	tasa.LoadModel("Models/tasa.obj");
+	cuerpo_juego = Model();
+	cuerpo_juego.LoadModel("Models/cuerpo_maquina.obj");
+	topo = Model();
+	topo.LoadModel("Models/topo.obj");
+	martillo = Model();
+	martillo.LoadModel("Models/martillo.obj");
 
+	//TERMINA CARGA DE MODELOS DE DRAGON BALL
 
 	std::vector<std::string> skyboxFaces;
 	skyboxFaces.push_back("Textures/Skybox/cupertin-lake_rt.tga");
@@ -420,23 +457,20 @@ int main()
 	spotLightCount++;
 
 
+	//ESTA LUZ ES LA DE LAS ESFERAS DEL DRAGÓN !!!!!!!!!!!!!!!!!!!!!!
 	pointLights[1] = PointLight(1.0f, 0.5f, 0.0f,  // Color naranja (R=1.0, G=0.5, B=0.0)
 		1.0f, 2.0f,  // Intensidades
 		-85.0f, 3.0f, -35.0f,  // Posición (misma que Shenron)
 		0.3f, 0.2f, 0.1f);
 	pointLightCount++;
 
+	//TERMINA LUZ ESFERAS DEL DRAGON
 
 	GLuint uniformProjection = 0, uniformModel = 0, uniformView = 0, uniformEyePosition = 0,
 		uniformSpecularIntensity = 0, uniformShininess = 0, uniformTextureOffset = 0;
 	GLuint uniformColor = 0;
 	glm::mat4 projection = glm::perspective(45.0f, (GLfloat)mainWindow.getBufferWidth() / mainWindow.getBufferHeight(), 0.1f, 1000.0f);
 
-	movCoche = 0.0f;
-	movOffset = 0.3f;
-	rotllanta = 0.0f;
-	rotllantaOffset = 10.0f;
-	avanza = true;
 
 	////Loop mientras no se cierra la ventana
 	while (!mainWindow.getShouldClose())
@@ -452,6 +486,8 @@ int main()
 		float trainSpeed = 0.5f;     //velocidd de movimiento
 		float rotationY_rad = glm::radians(trainRotation);
 
+
+		//COMPORTAMIENTO DEL TREN
 		switch (currentDirection) {
 		case TO_NEGATIVE_Z:
 			movZTrain -= trainSpeed * deltaTime;
@@ -490,7 +526,7 @@ int main()
 			break;
 		}
 
-		//animación de la androide
+		//ANIMACIÓN DEL ANDROIDE
 
 		float androideSpeed = 0.05f;  // Velocidad más lenta que el tren
 
@@ -532,7 +568,7 @@ int main()
 			break;
 		}
 
-		
+		//TERMINA ANDROIDE 
 
 
 		//movimiento shenron
@@ -544,7 +580,45 @@ int main()
 		if (planetaRotation > 360.0f) {
 			planetaRotation -= 360.0f;
 		}
+		//ACABA PLANETA
 
+		//EMPIEZA ANIMACIÓN TOPO
+		if (esperando) {
+			esperaActual += deltaTime;
+			if (esperaActual >= tiempoEspera) {
+				esperando = false;
+				esperaActual = 0.0f;
+				topoActual = rand() % 6;  // Cambia de hoyo
+			}
+		}
+		else {
+			if (subiendo) {
+				topoY += velocidadTopo * deltaTime;
+				if (topoY >= alturaMax) {
+					topoY = alturaMax;
+					subiendo = false;
+					esperaActual = 0.0f;
+				}
+			}
+			else {
+				esperaActual += deltaTime;
+				if (esperaActual >= tiempoArriba) {
+					topoY -= velocidadTopo * deltaTime;
+					if (topoY <= 0.0f) {
+						topoY = 0.0f;
+						subiendo = true;
+						esperando = true;
+						esperaActual = 0.0f;
+					}
+				}
+			}
+		}
+		//TRMINA MOVIMIENTO DEL TOPO
+		martilloAnimTime += deltaTime * martilloAnimSpeed;
+
+		// Calcular rotación oscilante para efecto de golpeo continuo
+		martilloRotation = -30.0f + (sin(martilloAnimTime) * 0.5f + 0.5f) * martilloGolpeAngle;
+		
 
 
 		//Recibir eventos del usuario
@@ -600,6 +674,7 @@ int main()
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		mapa.RenderModel();
 		modelaux = model;
+
 		//SHENRON
 		model = glm::translate(model, glm::vec3(-85.0f, 3.0f + shenronYOffset, -35.0f)); // Agregar shenronYOffset
 		model = glm::scale(model, glm::vec3(0.1f));
@@ -609,6 +684,7 @@ int main()
 		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		shenron.RenderModel();
 		model = modelaux;
+
 		//goku
 		modelaux = model;
 		model = glm::translate(model, glm::vec3(-55.0f, 1.4f, -8.2f));
@@ -618,6 +694,7 @@ int main()
 		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		model = modelaux;
 		goku.RenderModel();
+
 		//tickets
 		modelaux = model;
 		model = glm::translate(model, glm::vec3(-55.0f, 1.3f, -8.0f));
@@ -627,6 +704,7 @@ int main()
 		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		model = modelaux;
 		tickets.RenderModel();
+
 		//planeta
 		modelaux = model;
 		model = glm::translate(model, glm::vec3(-25.0f, 40.0f, -100.0f));
@@ -637,6 +715,7 @@ int main()
 		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		planeta.RenderModel();
 		model = modelaux;
+
 		//NAVES
 		modelaux = model;
 		model = glm::translate(model, glm::vec3(-75.0f, 30.0f, -60.0f));
@@ -669,6 +748,7 @@ int main()
 		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		model = modelaux;
 		nave.RenderModel();
+
 		//CASA GRANDE
 		modelaux = model;
 		model = glm::translate(model, glm::vec3(-25.0f, 1.2f, -64.0f));
@@ -679,6 +759,7 @@ int main()
 		model = modelaux;
 		casa_capsula.RenderModel();
 
+		//CASA KAME FUERA DEL MAPA
 		modelaux = model;
 		model = glm::translate(model, glm::vec3(-35.0f, 5.0f, -100.0f));
 		model = glm::scale(model, glm::vec3(5.0f));  // Puedes ajustar aquí
@@ -687,6 +768,8 @@ int main()
 		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		model = modelaux;
 		casa_kame.RenderModel();
+
+		//ANDROIDE VOLANDO
 
 		modelaux = model;
 		model = glm::translate(model, glm::vec3(movXAndroide, 20.0f, movZAndroide));  // Usa las variables de movimiento
@@ -698,6 +781,8 @@ int main()
 		androide.RenderModel();
 		model = modelaux;
 
+
+		//MODELO DE COCHE ESTÁTICO
 		modelaux = model;
 		model = glm::translate(model, glm::vec3(-35.0f, 1.5f, -20.0f));
 		model = glm::scale(model, glm::vec3(0.1f));  // Puedes ajustar aquí
@@ -708,6 +793,8 @@ int main()
 		model = modelaux;
 		coche.RenderModel();
 
+
+		//TERRENO DE NAMEK 
 		modelaux = model;
 		model = glm::translate(model, glm::vec3(-55.0f, -2.0f, -30.0f));
 		model = glm::scale(model, glm::vec3(0.5f));  // Puedes ajustar aquí
@@ -729,8 +816,10 @@ int main()
 		model = modelaux;
 		broly.RenderModel();
 
+
+		//CASA CAPSULA CON VENTANAS 
 		modelaux = model;
-		model = glm::translate(model, glm::vec3(-55.0f, 0.0f, -55.0f));
+		model = glm::translate(model, glm::vec3(-55.0f, 1.0f, -55.0f));
 		model = glm::scale(model, glm::vec3(0.5f));  // Puedes ajustar aquí
 		model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
@@ -739,6 +828,20 @@ int main()
 		model = modelaux;
 		casa.RenderModel();
 
+
+		//TASA DE BAÑO
+		modelaux = model;
+		model = glm::translate(model, glm::vec3(-55.0f, 2.0f, -55.0f));
+		model = glm::scale(model, glm::vec3(1.0f));  // Puedes ajustar aquí
+		model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		glUniform3fv(uniformColor, 1, glm::value_ptr(color));
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		model = modelaux;
+		tasa.RenderModel();
+
+
+		//RADARES TRADOS POR EL MAPA
 		modelaux = model;
 		model = glm::translate(model, glm::vec3(-45.0f, 1.3f, -45.0f));
 		model = glm::scale(model, glm::vec3(3.0f));  // Puedes ajustar aquí
@@ -770,7 +873,51 @@ int main()
 		radar.RenderModel();
 
 
-		//tren
+		//CASA DE GOKU DONDE ESTÁ EL JUEGO DEL TOPO
+		modelaux = model;
+		model = glm::translate(model, glm::vec3(-30.0f, 1.3f, -45.0f));
+		model = glm::scale(model, glm::vec3(0.4f));  // Puedes ajustar aquí
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		glUniform3fv(uniformColor, 1, glm::value_ptr(color));
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		model = modelaux;
+		casa_goku.RenderModel();
+
+		//CUERPO DEL JUEGO
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-30.0f, 2.0f, -42.5f));
+		model = glm::scale(model, glm::vec3(0.15f));  // Puedes ajustar aquí
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		cuerpo_juego.RenderModel();
+
+		//MARTILLO
+		glm::vec3 topoPos = posicionesTopo[topoActual];
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(
+			topoPos.x-0.8f,  
+			topoPos.y + topoY + martilloHeight, 
+			topoPos.z-1.0f)); 
+		model = glm::rotate(model, glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // Ajuste de ángulo
+		model = glm::rotate(model, glm::radians(martilloRotation), glm::vec3(0.0f, 0.0f, 1.0f)); // Animación de golpe
+
+		model = glm::scale(model, glm::vec3(0.3f)); // Escala ajustable
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		martillo.RenderModel();
+
+
+		//TOPO
+		model = glm::mat4(1.0);
+		glm::vec3 basePos = posicionesTopo[topoActual];
+		model = glm::translate(model, glm::vec3(basePos.x, basePos.y + topoY, basePos.z));
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.4f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		topo.RenderModel();
+
+
+		//TREN
 		glm::mat4 modelTrain = glm::mat4(1.0f);
 		modelTrain = glm::translate(modelTrain, glm::vec3(movXTrain, 0.5f, movZTrain));
 		modelTrain = glm::rotate(modelTrain, glm::radians(trainRotation), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -779,19 +926,9 @@ int main()
 		// 3) Enviar al shader y renderizar
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(modelTrain));
 		thomas.RenderModel();
-		
 	
 
-
-
-		
-
-
 		glDisable(GL_BLEND);
-
-
-
-
 
 		glUseProgram(0);
 
