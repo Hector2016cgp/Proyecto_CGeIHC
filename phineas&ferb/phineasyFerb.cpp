@@ -1,12 +1,7 @@
 ﻿
 /*
-Animación:
-Sesión 1:
-Simple o básica:Por banderas y condicionales (más de 1 transformación geométrica se ve modificada
-Sesión 2
-Compleja: Por medio de funciones y algoritmos.
-Textura Animada
-Mas de dos transformaciones para considerarse animación
+Proyecto Lab. CGEIHC
+Edir: García Hernández Diego Aldair
 */
 //para cargar imagen
 #define STB_IMAGE_IMPLEMENTATION
@@ -16,6 +11,8 @@ Mas de dos transformaciones para considerarse animación
 #include <cmath>
 #include <vector>
 #include <math.h>
+#include "animaciones_ferb.h" //animaciones Phineas & Ferb
+
 
 #include <glew.h>
 #include <glfw3.h>
@@ -71,41 +68,6 @@ float trainRotation = 0.0f;
 enum TrainDirection { TO_NEGATIVE_Z, TO_POSITIVE_X, TO_POSITIVE_Z, TO_NEGATIVE_X };
 TrainDirection currentDirection = TO_NEGATIVE_Z;
 
-float tiempoCarrusel = 0.0f;
-float ballonyTime = 0.0f;
-const float ballonySpeed = 0.01f;       // Controla la velocidad
-const float ballonyAmplitudeY = 3.0f;  // Oscilación Y 
-const float ballonyAmplitudeZ = 10.0f; // Oscilación Z 
-const float ballonyAmplitudeX = 5.0f; // Oscilación X
-
-float ferbHandTime = 0.0f;  // Tiempo acumulado
-float phineasHandTime = 0.0f;
-
-glm::vec3 posicionesPerry[8] = {
-	{-44.875f, 1.5f, 22.25f},
-	{-44.875f, 1.5f, 21.85f},
-	{-44.875f, 1.5f, 21.45f},
-	{-44.875f, 1.5f, 21.05f},
-	{-44.595f, 1.5f, 22.25f},
-	{-44.595f, 1.5f, 21.85f},
-	{-44.595f, 1.5f, 21.45f},
-	{-44.595f, 1.5f, 21.05f}
-};
-
-int perryActual = rand() % 8;
-float perryY = 0.0f;
-bool subiendo = true;
-float tiempoPerry = 0.0f;
-float esperaActual = 0.0f;
-bool esperando = false;
-
-const float velocidadPerry = 0.025f;      // Mucho más lento
-const float alturaMax = 0.4f;
-const float tiempoEspera = 4.0f;       // Espera antes de cambiar de posición
-const float tiempoArriba = 2.5f;        // Tiempo que se queda arriba
-
-
-
 Window mainWindow;
 std::vector<Mesh*> meshList;
 std::vector<Shader> shaderList;
@@ -118,8 +80,6 @@ Texture plainTexture;
 Texture pisoTexture;
 
 
-
-
 Model Kitt_M;
 Model Llanta_M;
 Model shenron;
@@ -128,6 +88,9 @@ Model goku;
 Model tickets;
 Model thomas;
 
+// ----------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------- UNIVERSO PHINEAS & FERB - MODELOS ------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------------------------
 //Modelos Phineas y Ferb
 Model edificioDoof_M;
 Model Ferb_M;
@@ -138,6 +101,9 @@ Model Isabella_M;
 Model Bufard_M;
 Model Baljeet_M;
 Model Doof_M;
+Model Doof_bicep_M;
+Model Doof_brazo_M;
+Model Doof_muneca_M;
 Model topo_machine_M;
 Model planty_M;
 Model ballony_M;
@@ -164,6 +130,12 @@ Model Phineas_mano_M;
 Model Mazo_M;
 Model carpa_globo_M;
 Model globo_M;
+Model dardo_M;
+Model linea_roja_M;
+Model globo_ponchado_M;
+
+// ----------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------------------------
 
 Skybox skybox;
 //materiales
@@ -385,6 +357,11 @@ int main()
 	tickets.LoadModel("Models/tickets.obj");
 	thomas = Model();
 	thomas.LoadModel("Models/thomas.obj");
+	
+	// ----------------------------------------------------------------------------------------------------------------------------------
+	// ----------------------------------------- UNIVERSO PHINEAS & FERB - MODELOS ------------------------------------------------------
+	// ----------------------------------------------------------------------------------------------------------------------------------
+	
 	edificioDoof_M = Model();
 	edificioDoof_M.LoadModel("Models/EdificioDoof.obj");
 	Ferb_M = Model();
@@ -403,6 +380,12 @@ int main()
 	Bufard_M.LoadModel("Models/bufard.obj");
 	Doof_M = Model();
 	Doof_M.LoadModel("Models/doof.obj");
+	Doof_bicep_M = Model();
+	Doof_bicep_M.LoadModel("Models/doof_bicep.obj");
+	Doof_brazo_M = Model();
+	Doof_brazo_M.LoadModel("Models/doof_brazo.obj");
+	Doof_muneca_M = Model();
+	Doof_muneca_M.LoadModel("Models/doof_muneca.obj");
 	topo_machine_M = Model();
 	topo_machine_M.LoadModel("Models/topo_machine.obj");
 	planty_M = Model();
@@ -455,6 +438,15 @@ int main()
 	carpa_globo_M.LoadModel("Models/carpa_globos.obj");
 	globo_M = Model();
 	globo_M.LoadModel("Models/globo.obj");
+	dardo_M = Model();
+	dardo_M.LoadModel("MOdels/dardo.obj");
+	linea_roja_M = Model();
+	linea_roja_M.LoadModel("Models/linea_roja.obj");
+	globo_ponchado_M = Model();
+	globo_ponchado_M.LoadModel("Models/globo_ponchado.obj");
+
+	// ----------------------------------------------------------------------------------------------------------------------------------
+	// ----------------------------------------------------------------------------------------------------------------------------------
 
 
 	std::vector<std::string> skyboxFaces;
@@ -523,51 +515,10 @@ int main()
 		deltaTime = now - lastTime;
 		deltaTime += (now - lastTime) / limitFPS;
 		lastTime = now;
-		tiempoCarrusel += deltaTime;
-		ballonyTime += deltaTime;
-		ferbHandTime += deltaTime;
-		phineasHandTime += deltaTime;
-
-		//Whack a Perry
-		if (esperando) {
-			esperaActual += deltaTime;
-			if (esperaActual >= tiempoEspera) {
-				esperando = false;
-				esperaActual = 0.0f;
-				perryActual = rand() % 8;  // Cambia de hoyo
-			}
-		}
-		else {
-			if (subiendo) {
-				perryY += velocidadPerry * deltaTime;
-				if (perryY >= alturaMax) {
-					perryY = alturaMax;
-					subiendo = false;
-					esperaActual = 0.0f;
-				}
-			}
-			else {
-				esperaActual += deltaTime;
-				if (esperaActual >= tiempoArriba) {
-					perryY -= velocidadPerry * deltaTime;
-					if (perryY <= 0.0f) {
-						perryY = 0.0f;
-						subiendo = true;
-						esperando = true;
-						esperaActual = 0.0f;
-					}
-				}
-			}
-		}
+		
 
 
-
-
-		// Movimiento
-		float posX = -40.0f + cos(ballonyTime * ballonySpeed * 0.7f) * ballonyAmplitudeX;
-		float posY = 20.0f + sin(ballonyTime * ballonySpeed) * ballonyAmplitudeY;
-		float posZ = 35.0f + sin(ballonyTime * ballonySpeed * 0.5f) * ballonyAmplitudeZ;
-
+		animaciones_ferb(deltaTime); // ANIMACIONES DEL UNIVERSO PHINEAS & FERB
 
 	
 
@@ -637,8 +588,6 @@ int main()
 		}
 
 
-
-
 		//Recibir eventos del usuario
 		glfwPollEvents();
 		camera.keyControl(mainWindow.getsKeys(), deltaTime);
@@ -664,13 +613,10 @@ int main()
 		glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.calculateViewMatrix()));
 		glUniform3f(uniformEyePosition, camera.getCameraPosition().x, camera.getCameraPosition().y, camera.getCameraPosition().z);
 
-		
-		
 		//información al shader de fuentes de iluminación
 		shaderList[0].SetDirectionalLight(&mainLight);
 		shaderList[0].SetPointLights(pointLights, pointLightCount);
 		shaderList[0].SetSpotLights(spotLights, spotLightCount);
-
 
 
 		glm::mat4 model(1.0);
@@ -679,11 +625,6 @@ int main()
 		glm::vec2 toffset = glm::vec2(0.0f, 0.0f);
 
 		glUniform2fv(uniformTextureOffset, 1, glm::value_ptr(toffset));
-	
-
-		
-
-		
 
 		model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
@@ -726,6 +667,10 @@ int main()
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(modelTrain));
 		thomas.RenderModel();
 
+
+		// ----------------------------------------------------------------------------------------------------------------------------------
+		// ----------------------------------------- UNIVERSO PHINEAS & FERB - RENDERIZACIÓN-------------------------------------------------
+		// ----------------------------------------------------------------------------------------------------------------------------------
 
 		//EDIFICIO DE DOOF
 		model = glm::mat4(1.0);
@@ -806,15 +751,11 @@ int main()
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Baljeet_M.RenderModel();
 
-		//Doof
-		model = glm::mat4(1.0);
-		model = glm::translate(model, glm::vec3(-50.0f, 1.2f, 64.0f));
-		model = glm::rotate(model, glm::radians(130.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(0.75f));
-		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		Doof_M.RenderModel();
-
 		
+
+
+		// --------------------------------------------JUEGO DE PERRY ---------------------------------------------------------------------
+
 		//Maquina de perry
 		model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(-45.0f, 1.2f, 22.0f));
@@ -831,8 +772,6 @@ int main()
 		model = glm::scale(model, glm::vec3(0.4f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Perry_M.RenderModel();
-
-
 
 		//Carpa Perry
 		model = glm::mat4(1.0);
@@ -856,6 +795,36 @@ int main()
 		model = glm::rotate(model, glm::radians(-80.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		letrero_perry_juego_M.RenderModel();
+
+		//Doof
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-43.5f, 1.2f, 21.75f));
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.75f));
+		modelaux = model; // Guarda la transformación base
+
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Doof_M.RenderModel();
+
+		// BICEPS (rotación local en eje X)
+		model = glm::translate(modelaux, glm::vec3(-0.497f, 2.205f, -0.066f)); // punto de unión
+		model = glm::rotate(model, glm::radians(rotBicep), glm::vec3(1.0f, 0.0f, 0.0f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Doof_bicep_M.RenderModel();
+
+		// BRAZO (relativo al bicep)
+		model = glm::translate(model, glm::vec3(-0.232f, -0.066f, 0.602f)); // unión
+		model = glm::rotate(model, glm::radians(rotBrazo), glm::vec3(1.0f, 0.0f, 0.0f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Doof_brazo_M.RenderModel();
+
+		// MUÑECA (relativa al brazo)
+		model = glm::translate(model, glm::vec3(-0.100f, 0.465f, 0.290f)); // unión
+		model = glm::rotate(model, glm::radians(rotMuneca), glm::vec3(1.0f, 0.0f, 0.0f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Doof_muneca_M.RenderModel();
+
+		// -----------------------------------------------------------------------------------------------------------------
 		
 		//---------------JUEGO DE LOS GLOBOS----------------
 		// Carpa Perry
@@ -875,11 +844,62 @@ int main()
 		for (int col = 0; col < 3; ++col) {
 			glm::mat4 colBase = glm::translate(modelBase, glm::vec3(xOffsets[col], 0.0f, 0.0f));
 			for (int row = 0; row < 3; ++row) {
+				if (!globos[row][col]) continue;  // No dibujar globo si está desactivado
+
 				glm::mat4 globoModel = glm::translate(colBase, glm::vec3(0.0f, row * 1.0f, 0.0f));
 				glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(globoModel));
 				globo_M.RenderModel();
 			}
 		}
+
+		for (int col = 0; col < 3; ++col) {
+			glm::mat4 colBase = glm::translate(modelBase, glm::vec3(xOffsets[col], 0.0f, 0.0f));
+			for (int row = 0; row < 3; ++row) {
+				if (globosPonchados[row][col]) {
+					glm::mat4 globoPonchadoModel = glm::translate(colBase, glm::vec3(0.0f, row * 1.0f, 0.0f));
+					glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(globoPonchadoModel));
+					globo_ponchado_M.RenderModel();
+				}
+			}
+		}
+ 
+
+
+		//dardos
+		// Aumenta la rotación durante el lanzamiento
+		if (dardoEstado == 1) {
+			rotacionDardo += velocidadRotacionDardo * deltaTime;
+			if (rotacionDardo > 360.0f) rotacionDardo -= 360.0f;
+		}
+		else if (dardoEstado == 0) {
+			rotacionDardo = 0.0f; // reinicia para cada nuevo lanzamiento
+		}
+
+		// Render dardo en movimiento
+		model = glm::mat4(1.0);
+		model = glm::translate(model, posDardoActual);
+		model = glm::rotate(model, glm::radians(rotacionDardo), glm::vec3(0.0f, 0.0f, 1.0f)); // ROTACIÓN EN Z
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		dardo_M.RenderModel();
+
+
+		for (const glm::vec3& posFinal : dardosFinales) {
+			glm::mat4 modelDardoFinal = glm::mat4(1.0f);
+			modelDardoFinal = glm::translate(modelDardoFinal, posFinal);
+			glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(modelDardoFinal));
+			dardo_M.RenderModel();
+		}
+
+
+		//linea roja
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-15.0f, 1.3f, 48.0f));
+		//model = glm::scale(model, glm::vec3(0.75f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		linea_roja_M.RenderModel();
+
+
+		//---------------------------------------------------------
 
 
 		//Planty
@@ -929,9 +949,6 @@ int main()
 			float salto = (i == 11) ? 8.0f : 2.0f;
 			model = glm::translate(model, glm::vec3(salto, 0.0f, 0.0f));
 		}
-
-
-
 
 
 		//toilet phineas 
@@ -1049,18 +1066,10 @@ int main()
 			}
 		}
 
-
-
-
-
-		
-
-
+		// ----------------------------------------------------------------------------------------------------------------------------------
+		// ----------------------------------------------------------------------------------------------------------------------------------
 
 		glDisable(GL_BLEND);
-
-
-
 
 
 		glUseProgram(0);
